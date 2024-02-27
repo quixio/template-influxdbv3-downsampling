@@ -1,0 +1,21 @@
+name: Downsampler
+language: python
+variables:
+  - name: input
+    inputType: InputTopic
+    description: This is the input topic to read data from
+    defaultValue: machine-temperature-v2
+    required: true
+  - name: output
+    inputType: OutputTopic
+    description: This is the output topic to write data to
+    defaultValue: machine-temperature-downsampled-v3
+    required: true
+  - name: data_key
+    inputType: FreeText
+    description: ''
+    defaultValue: temperature
+    required: true
+dockerfile: dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

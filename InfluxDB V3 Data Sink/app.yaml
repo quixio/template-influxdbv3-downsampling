@@ -1,0 +1,51 @@
+name: InfluxDB V3 Data Sink
+language: python
+variables:
+  - name: INFLUXDB_TAG_KEYS
+    inputType: FreeText
+    description: 'A dictonary containing tags and their expected values. E.g {"room": "Kitchen", "sensor": "K001"}'
+    defaultValue: '[]'
+    required: false
+  - name: INFLUXDB_MEASUREMENT_NAME
+    inputType: FreeText
+    description: ''
+    defaultValue: machine-temp-downsampled-v2
+    required: true
+  - name: INFLUXDB_HOST
+    inputType: FreeText
+    description: ''
+    defaultValue: https://us-east-1-1.aws.cloud2.influxdata.com
+    required: true
+  - name: INFLUXDB_ORG
+    inputType: FreeText
+    description: ''
+    defaultValue: ContentSquad
+    required: true
+  - name: INFLUXDB_DATABASE
+    inputType: FreeText
+    description: ''
+    defaultValue: machine-generator-data
+    required: true
+  - name: input
+    inputType: InputTopic
+    description: ''
+    defaultValue: machine-temperature-downsampled
+    required: true
+  - name: INFLUXDB_TOKEN
+    inputType: Secret
+    description: ''
+    defaultValue: influx_db3
+    required: true
+  - name: INFLUXDB_FIELD_KEYS
+    inputType: FreeText
+    description: ''
+    defaultValue: "['temperature']"
+    required: true
+  - name: CONSUMER_GROUP_NAME
+    inputType: FreeText
+    description: ''
+    defaultValue: influxdb-data-writer
+    required: false
+dockerfile: dockerfile
+runEntryPoint: main.py
+defaultFile: main.py

@@ -1,0 +1,265 @@
+# Quix Project Descriptor
+# This file describes the data pipeline and configuration of resources of a Quix Project.
+
+metadata:
+  version: 1.0
+
+# This section describes the Deployments of the data pipeline
+deployments:
+  - name: InfluxDB V3 Data Source
+    application: InfluxDB V3 Data Source
+    deploymentType: Service
+    version: b469b604db1e9ac3e0f40078def288ed850a2e25
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    desiredStatus: Running
+    variables:
+      - name: output
+        inputType: OutputTopic
+        description: Name of the output topic to write into
+        required: true
+        value: machine-temperature-v2
+      - name: INFLUXDB_ORG
+        inputType: FreeText
+        description: ''
+        required: true
+        value: ContentSquad
+      - name: INFLUXDB_HOST
+        inputType: FreeText
+        description: ''
+        required: true
+        value: https://us-east-1-1.aws.cloud2.influxdata.com/
+      - name: INFLUXDB_MEASUREMENT_NAME
+        inputType: FreeText
+        description: ''
+        required: true
+        value: machine-health
+      - name: task_interval
+        inputType: FreeText
+        description: ''
+        required: false
+        value: 1m
+      - name: INFLUXDB_DATABASE
+        inputType: FreeText
+        description: ''
+        required: true
+        value: machine-generator-data
+      - name: INFLUXDB_TOKEN
+        inputType: Secret
+        description: ''
+        required: true
+        secretKey: influx_db3
+      - name: BROKER_ADDRESS
+        inputType: FreeText
+        description: ''
+        required: false
+        value: ''
+  - name: Downsampler
+    application: Downsampler
+    deploymentType: Service
+    version: 097d3df3dc89eb34b303ba12da29b3651c25e6b0
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    desiredStatus: Running
+    variables:
+      - name: input
+        inputType: InputTopic
+        description: This is the input topic to read data from
+        required: true
+        value: machine-temperature-v2
+      - name: output
+        inputType: OutputTopic
+        description: This is the output topic to write data to
+        required: true
+        value: machine-temperature-downsampled-v3
+      - name: data_key
+        inputType: FreeText
+        description: ''
+        required: true
+        value: temperature
+  - name: InfluxDB V3 Data Sink
+    application: InfluxDB V3 Data Sink
+    deploymentType: Service
+    version: 013117bbe4c48b7112e5e57b2b8442c5d0506a40
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    desiredStatus: Running
+    variables:
+      - name: INFLUXDB_TAG_KEYS
+        inputType: FreeText
+        description: 'A dictonary containing tags and their expected values. E.g {"room": "Kitchen", "sensor": "K001"}'
+        required: false
+        value: '[]'
+      - name: INFLUXDB_MEASUREMENT_NAME
+        inputType: FreeText
+        description: ''
+        required: true
+        value: machine-temp-downsampled-v2
+      - name: INFLUXDB_HOST
+        inputType: FreeText
+        description: ''
+        required: true
+        value: https://us-east-1-1.aws.cloud2.influxdata.com
+      - name: INFLUXDB_ORG
+        inputType: FreeText
+        description: ''
+        required: true
+        value: ContentSquad
+      - name: INFLUXDB_DATABASE
+        inputType: FreeText
+        description: ''
+        required: true
+        value: machine-generator-data
+      - name: input
+        inputType: InputTopic
+        description: ''
+        required: true
+        value: machine-temperature-downsampled-v3
+      - name: INFLUXDB_TOKEN
+        inputType: Secret
+        description: ''
+        required: true
+        secretKey: influx_db3
+      - name: INFLUXDB_FIELD_KEYS
+        inputType: FreeText
+        description: ''
+        required: true
+        value: "['temperature']"
+      - name: CONSUMER_GROUP_NAME
+        inputType: FreeText
+        description: ''
+        required: false
+        value: influxdb-data-writer-v2
+  - name: Write raw machine data to InfluxDB 3.0
+    application: Machine data to InfluxDB
+    deploymentType: Service
+    version: 5531d9dcb0452fddd582c81ae8e8c39db469c93b
+    resources:
+      cpu: 200
+      memory: 500
+      replicas: 1
+    desiredStatus: Running
+    variables:
+      - name: INFLUXDB_HOST
+        inputType: FreeText
+        description: Host address for the InfluxDB instance.
+        required: true
+        value: https://us-east-1-1.aws.cloud2.influxdata.com
+      - name: INFLUXDB_TOKEN
+        inputType: Secret
+        description: Authentication token to access InfluxDB.
+        required: true
+        secretKey: influx_db3
+      - name: INFLUXDB_ORG
+        inputType: FreeText
+        description: Organization name in InfluxDB.
+        required: false
+        value: ContentSquad
+      - name: INFLUXDB_DATABASE
+        inputType: FreeText
+        description: Database name in InfluxDB where data should be stored.
+        required: true
+        value: machine-generator-data
+      - name: INFLUXDB_TAG_COLUMNS
+        inputType: FreeText
+        description: Columns to be used as tags when writing data to InfluxDB.
+        required: false
+        value: "['tag1', 'tag2']"
+      - name: INFLUXDB_MEASUREMENT_NAME
+        inputType: FreeText
+        description: The InfluxDB measurement to write data to. If not specified, the name of the input topic will be used
+        required: false
+        value: machine-health
+      - name: INFLUXDB_FIELD_KEYS
+        inputType: FreeText
+        description: The fields to include when writing the measurement data
+        required: true
+        value: "['field1','field2']"
+      - name: BROKER_ADDRESS
+        inputType: FreeText
+        description: ''
+        required: true
+        value: publickafka.quix.io
+
+# This section describes the Topics of the data pipeline
+topics:
+  - name: machine-temperature
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: machine-temperature-downsampled
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: changelog__downsampling-consumer-groupv6--machine-temperature--tumbling_window_60000_mean
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+      cleanupPolicy: Compact
+  - name: input-topic
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: changelog__downsampling-consumer-groupv6--machine-temperature--tumbling_window_100_mean
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+      cleanupPolicy: Compact
+  - name: machine-temperature-v2
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: machine-temperature-downsampled-v2
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: changelog__downsampling-consumer-groupv6--machine-temperature-v2--tumbling_window_100_mean
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+      cleanupPolicy: Compact
+  - name: machine-temperature-downsampled-v3
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+  - name: changelog__downsampling-consumer-groupv6--machine-temperature-v2--tumbling_window_60000_mean
+    persisted: false
+    configuration:
+      partitions: 1
+      replicationFactor: 2
+      retentionInMinutes: 1440
+      retentionInBytes: 52428800
+      cleanupPolicy: Compact
