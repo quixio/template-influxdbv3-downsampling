@@ -11,7 +11,7 @@ variables:
     description: This is the output topic to write data to
     defaultValue: machine-temperature-downsampled-v3
     required: true
-  - name: data_key
+  - name: target_field
     inputType: FreeText
     description: ''
     defaultValue: temperature
