@@ -13,8 +13,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 consumer_group_name = os.environ.get('CONSUMER_GROUP_NAME', "influxdb-data-writer")
 
-app = Application.Quix(consumer_group=consumer_group_name,
-                       auto_offset_reset="earliest")
+# Create an Application that uses local Kafka
+app = Application(
+  broker_address=os.environ.get('BROKER_ADDRESS','localhost:9092'),
+  consumer_group=consumer_group_name,
+  auto_create_topics=True
+)
+
+# Override the app variable if the local development env var is set to false or is not present.
+localdev = os.environ.get('localdev', "false")
+
+if localdev == "false":
+    # Create a Quix platform-specific application instead
+    app = Application.Quix(consumer_group=consumer_group_name, auto_create_topics=True)
 
 input_topic = app.topic(os.environ["input"], value_deserializer=JSONDeserializer())
 
