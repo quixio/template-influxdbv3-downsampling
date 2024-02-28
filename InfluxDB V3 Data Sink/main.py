@@ -17,7 +17,8 @@ consumer_group_name = os.environ.get('CONSUMER_GROUP_NAME', "influxdb-data-write
 app = Application(
   broker_address=os.environ.get('BROKER_ADDRESS','localhost:9092'),
   consumer_group=consumer_group_name,
-  auto_create_topics=True
+  auto_create_topics=True,
+  auto_offset_reset='earliest'
 )
 
 # Override the app variable if the local development env var is set to false or is not present.
@@ -25,7 +26,7 @@ localdev = os.environ.get('localdev', "false")
 
 if localdev == "false":
     # Create a Quix platform-specific application instead
-    app = Application.Quix(consumer_group=consumer_group_name, auto_create_topics=True)
+    app = Application.Quix(consumer_group=consumer_group_name, auto_create_topics=True, auto_offset_reset='earliest')
 
 input_topic = app.topic(os.environ["input"], value_deserializer=JSONDeserializer())
 
