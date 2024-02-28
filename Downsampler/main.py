@@ -25,8 +25,8 @@ if localdev == "false":
 input_topic = app.topic(os.environ["input"], value_deserializer=JSONDeserializer())
 output_topic = app.topic(os.environ["output"], value_serializer=JSONSerializer())
 
-data_key = os.environ["data_key"]
-logger.info(f"Data key is: {data_key}")
+target_field = os.environ["target_field"]
+logger.info(f"Target field is: {target_field}")
 
 sdf = app.dataframe(input_topic)
 sdf = sdf.update(lambda value: logger.info(f"Input value received: {value}"))
@@ -52,7 +52,7 @@ topic = app.topic("input-topic", timestamp_extractor=custom_ts_extractor)
 
 sdf = (
     # Extract the relevant field from the record
-    sdf.apply(lambda value: value[data_key])
+    sdf.apply(lambda value: value[target_field])
 
     # Define a tumbling window of 1 minute
     .tumbling_window(timedelta(minutes=1))
@@ -68,7 +68,7 @@ sdf = (
 sdf = sdf.apply(
     lambda value: {
         "time": value["end"],
-        f"{data_key}": value["value"], 
+        f"{target_field}": value["value"], 
     }
 )
 
